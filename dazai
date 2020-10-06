@@ -1,19 +1,180 @@
 #!/bin/bash
 
-# $1: seed file
+SCRIPT_FILE_NAME=$(basename $0)
+SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
+SELF=$(cd $(dirname $0); pwd)
+VERSION="1.0.0"
+LOGGING=false
 
-SEED_DIR="seed"
+function _usage() {
+    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
+    echo "  This script is ~."
+    echo
+    echo "Options:"
+    echo "  -h, --help                     Show help."
+    echo "  -v, --version                  Show script version."
+    echo "  -n, --length ARG               length of output chars."
+    echo "  -n, --number ARG               number of output char lines."
+#    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
+#    echo "  -c, --long-c                   sample option: have no argument."
+#    echo "  -, --                          after this, all value will be argument(s)."
+    echo "      --no-symbol                No symbol within output."
+#    echo "  -l                             sample flag option."
+#    echo "  -p                             sample flag option."
+    echo "      --verbose                  Print various logging information"
+    echo
+    exit 1
+}
 
-seed=($(fold -w1 ${SEED_DIR}/zenkaku.txt ${SEED_DIR}/hankaku.txt $1))
-word=${seed[$(($RANDOM % ${#seed[*]}))]}
+function _log() {
+    ${LOGGING} && echo "$@" || return 0
+}
 
-count=20
+function _err() {
+    echo "[err] $1" && exit 1
+}
 
-result=()
-for i in $(seq ${count}); do
-    result+=${seed[$(($RANDOM % ${#seed[*]}))]}
-done
+function _args_count() {
+    echo ${#ARG_VALUES[@]}
+}
 
-echo ${result[@]}
+function _is_exist() {
+    [ -f $1 ] || [ -d $1 ] || [[ $(type $1) ]]
+}
 
+function _verbose() {
+    _log "SEED_DIR: ${SEED_DIR}"
+    _log "OUT_CHAR_LENGTH: ${OUT_CHAR_LENGTH}"
+    _log "OUT_LINE_NUMBER: ${OUT_LINE_NUMBER}"
+    _log "NO_SYMBOL: ${NO_SYMBOL}"
+}
+
+HAN_CHAR="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+HAN_NUM="0123456789"
+#HAN_SYMBOL=" !#$%&'()-^\@[;:],./\=~|`{+*}<>?_"
+
+SEED_DIR="${SELF}/seed"
+OUT_CHAR_LENGTH=20
+OUT_LINE_NUMBER=1
+NO_SYMBOL='false'
+
+function _main() {
+    local format=${ARG_VALUES[0]}
+    case ${format} in
+        'han' | 'hankaku' )
+            ${NO_SYMBOL} && {
+                seed=($(cat ${SEED_DIR}/hankaku.txt \
+                        | head -n 3 \
+                        | sed -e 's/ //g' \
+                        | fold -w1))
+            } || {
+                seed=($(cat ${SEED_DIR}/hankaku.txt \
+                        | fold -w 1))
+            }
+            ;;
+        'zen' | 'zenkaku')
+            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
+            ;;
+        *)
+            [ ! -e ${ARG_VALUES[0]} ] && _err "No file of ${ARG_VALUES[0]}"
+#            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
+#                                ${SEED_DIR}/hankaku.txt \
+#                                ${ARG_VALUES[0]}))
+            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt ${SEED_DIR}/hankaku.txt))
+            ;;
+    esac
+
+#    for val in ${seed[@]}; do
+#        echo ${val}
+#    done
+
+    for n in $(seq ${OUT_LINE_NUMBER}); do
+        for i in $(seq ${OUT_CHAR_LENGTH}); do
+            char_line+=${seed[$((${RANDOM} % ${#seed[*]}))]}
+        done
+        echo ${char_line[@]}
+        char_line=""
+    done
+}
+
+# -------------------------------------------------------------
+# Arguments and Options
+# -------------------------------------------------------------
+
+ARG_VALUES=()
+SAMPLE_OPTION_A=""
+SAMPLE_OPTION_B=""
+SAMPLE_OPTION_FLAG_N=false
+SAMPLE_OPTION_FLAG_L=false
+SAMPLE_OPTION_FLAG_P=false
+
+function _analyse_args_and_options() {
+    while (( $# > 0 ))
+    do
+        case $1 in
+            -h | --help)
+                _usage
+                exit 1
+                ;;
+            -v | --version)
+                echo ${VERSION}
+                exit 1
+                ;;
+            --verbose)
+                LOGGING=true
+                shift
+                ;;
+            -l | --length)                  # Must have argument
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-l option requires a value."
+                fi
+                OUT_CHAR_LENGTH=$2
+                shift 2
+                ;;
+            -n | --number)                  # Must have argument
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-n option requires a value."
+                fi
+                OUT_LINE_NUMBER=$2
+                shift 2
+                ;;
+#            -b | --long-b)                  # Either with or without argument is possible
+#                set +u
+#                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+#                    shift
+#                else
+#                    SAMPLE_OPTION_B=$2
+#                    shift 2
+#                fi
+#                set -u
+#                ;;
+#            -c | --long-c)                  # no argument
+#                shift
+#                ;;
+            -- | -) # after this all args include '-xx', will treat arg value
+                shift
+                ARG_VALUES+=( "$@" )
+                break
+                ;;
+            --*) # for true or false flags, no argument
+                if [[ "$1" =~ 'no-symbol' ]]; then
+                    NO_SYMBOL=true
+                fi
+                shift
+                ;;
+            *)
+                ARG_VALUES+=("$1")
+                shift
+                ;;
+        esac
+    done
+}
+
+# -------------------------------------------------------------
+# Main Routine
+# -------------------------------------------------------------
+_analyse_args_and_options $@ && {
+    _verbose
+    _main
+}
 exit 0
