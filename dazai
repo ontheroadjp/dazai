@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# $1: seed file
+
+SEED_DIR="seed"
+
+seed=($(fold -w1 ${SEED_DIR}/zenkaku.txt ${SEED_DIR}/hankaku.txt $1))
+word=${seed[$(($RANDOM % ${#seed[*]}))]}
+
+count=20
+
+result=()
+for i in $(seq ${count}); do
+    result+=${seed[$(($RANDOM % ${#seed[*]}))]}
+done
+
+echo ${result[@]}
+
+exit 0
