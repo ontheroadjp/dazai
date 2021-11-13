@@ -15,12 +15,7 @@ function _usage() {
     echo "  -v, --version                  Show script version."
     echo "  -n, --length ARG               length of output chars."
     echo "  -n, --number ARG               number of output char lines."
-#    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
-#    echo "  -c, --long-c                   sample option: have no argument."
-#    echo "  -, --                          after this, all value will be argument(s)."
     echo "      --no-symbol                No symbol within output."
-#    echo "  -l                             sample flag option."
-#    echo "  -p                             sample flag option."
     echo "      --verbose                  Print various logging information"
     echo
     exit 1
@@ -77,16 +72,11 @@ function _main() {
             ;;
         *)
             [ ! -e ${ARG_VALUES[0]} ] && _err "No file of ${ARG_VALUES[0]}"
-#            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
-#                                ${SEED_DIR}/hankaku.txt \
-#                                ${ARG_VALUES[0]}))
-            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt ${SEED_DIR}/hankaku.txt))
+            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
+                                ${SEED_DIR}/hankaku.txt \
+                                ${ARG_VALUES[0]}))
             ;;
     esac
-
-#    for val in ${seed[@]}; do
-#        echo ${val}
-#    done
 
     for n in $(seq ${OUT_LINE_NUMBER}); do
         for i in $(seq ${OUT_CHAR_LENGTH}); do
@@ -138,19 +128,6 @@ function _analyse_args_and_options() {
                 OUT_LINE_NUMBER=$2
                 shift 2
                 ;;
-#            -b | --long-b)                  # Either with or without argument is possible
-#                set +u
-#                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-#                    shift
-#                else
-#                    SAMPLE_OPTION_B=$2
-#                    shift 2
-#                fi
-#                set -u
-#                ;;
-#            -c | --long-c)                  # no argument
-#                shift
-#                ;;
             -- | -) # after this all args include '-xx', will treat arg value
                 shift
                 ARG_VALUES+=( "$@" )
