@@ -47,14 +47,9 @@ function _verbose() {
 SEED_DIR="${SELF}/seed"
 OUT_CHAR_LENGTH=20
 OUT_LINE_NUMBER=1
-NO_SYMBOL='false'
+NO_SYMBOL=false
 
 function _main() {
-#    set -f
-#    local seed=$(fold -w 1 ${SEED_DIR}/hankaku.txt)
-#    echo ${seed[@]}
-#    set +f
-#    return
     local format=${ARG_VALUES[0]}
     case ${format} in
         'han' | 'hankaku' )
@@ -71,13 +66,16 @@ function _main() {
             }
             ;;
         'zen' | 'zenkaku')
-            seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
+            ${NO_SYMBOL} && {
+                #seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
+                seed=($(cat ${SEED_DIR}/zenkaku.txt | head -n 10 | fold -w 1))
+            } || {
+                seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
+            }
             ;;
         *)
-            [ ! -e ${ARG_VALUES[0]} ] && _err "No file of ${ARG_VALUES[0]}"
             seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
-                                ${SEED_DIR}/hankaku.txt \
-                                ${ARG_VALUES[0]}))
+                                ${SEED_DIR}/hankaku.txt ))
             ;;
     esac
 
