@@ -44,10 +44,6 @@ function _verbose() {
     _log "NO_SYMBOL: ${NO_SYMBOL}"
 }
 
-HAN_CHAR="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-HAN_NUM="0123456789"
-#HAN_SYMBOL=" !#$%&'()-^\@[;:],./\=~|`{+*}<>?_"
-
 SEED_DIR="${SELF}/seed"
 OUT_CHAR_LENGTH=20
 OUT_LINE_NUMBER=1
