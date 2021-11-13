@@ -50,6 +50,11 @@ OUT_LINE_NUMBER=1
 NO_SYMBOL='false'
 
 function _main() {
+#    set -f
+#    local seed=$(fold -w 1 ${SEED_DIR}/hankaku.txt)
+#    echo ${seed[@]}
+#    set +f
+#    return
     local format=${ARG_VALUES[0]}
     case ${format} in
         'han' | 'hankaku' )
@@ -59,8 +64,10 @@ function _main() {
                         | sed -e 's/ //g' \
                         | fold -w1))
             } || {
+                set -f
                 seed=($(cat ${SEED_DIR}/hankaku.txt \
                         | fold -w 1))
+                set +f
             }
             ;;
         'zen' | 'zenkaku')
@@ -74,6 +81,7 @@ function _main() {
             ;;
     esac
 
+    set -f
     for n in $(seq ${OUT_LINE_NUMBER}); do
         for i in $(seq ${OUT_CHAR_LENGTH}); do
             char_line+=${seed[$((${RANDOM} % ${#seed[*]}))]}
@@ -81,6 +89,7 @@ function _main() {
         echo ${char_line[@]}
         char_line=""
     done
+    set +f
 }
 
 # -------------------------------------------------------------
