@@ -3,8 +3,9 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-VERSION="0.8.0"
+VERSION="1.0.0"
 LOGGING=false
+SEPARATOR="---------------------------"
 
 function _usage() {
     echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
@@ -13,8 +14,9 @@ function _usage() {
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -n, --length ARG               length of output chars."
-    echo "  -n, --number ARG               number of output char lines."
+    echo "  -n, --length ARG               Length of output chars."
+    echo "  -n, --number ARG               Number of output char lines."
+    echo "  -0, --out ARG                  Output file path."
     echo "      --no-symbol                No symbol within output."
     echo "      --verbose                  Print various logging information"
     echo
@@ -42,12 +44,15 @@ function _verbose() {
     _log "OUT_CHAR_LENGTH: ${OUT_CHAR_LENGTH}"
     _log "OUT_LINE_NUMBER: ${OUT_LINE_NUMBER}"
     _log "NO_SYMBOL: ${NO_SYMBOL}"
+    _log "OUT_FILE: ${OUT_FILE}"
+    _log ${SEPARATOR}
 }
 
 SEED_DIR="${SELF}/seed"
 OUT_CHAR_LENGTH=20
 OUT_LINE_NUMBER=1
 NO_SYMBOL=false
+OUT_FILE=''
 
 function _main() {
     local format=${ARG_VALUES[0]}
@@ -84,7 +89,13 @@ function _main() {
         for i in $(seq ${OUT_CHAR_LENGTH}); do
             char_line+=${seed[$((${RANDOM} % ${#seed[*]}))]}
         done
-        echo ${char_line[@]}
+
+        [ -z ${OUT_FILE} ] && {
+            echo ${char_line[@]}
+        } || {
+            echo "${char_line[@]}" >> ${OUT_FILE}
+        }
+
         char_line=""
     done
     set +f
@@ -131,6 +142,13 @@ function _analyse_args_and_options() {
                 OUT_LINE_NUMBER=$2
                 shift 2
                 ;;
+            -o | --out)                  # Must have argument
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-o option requires a value."
+                fi
+                OUT_FILE=$2
+                shift 2
+                ;;
             -- | -) # after this all args include '-xx', will treat arg value
                 shift
                 ARG_VALUES+=( "$@" )
@@ -150,11 +168,23 @@ function _analyse_args_and_options() {
     done
 }
 
+function _verify_static_vars() {
+    [ ! -z ${OUT_FILE} ] && [ ! -d $(dirname ${OUT_FILE}) ] && {
+        _err "No such directory. - $(dirname ${OUT_FILE})"
+    }
+    [ ! -z ${OUT_FILE} ] && [ -f ${OUT_FILE} ] && {
+        _err "File already exist. - ${OUT_FILE}"
+    }
+   :
+}
+
 # -------------------------------------------------------------
 # Main Routine
 # -------------------------------------------------------------
 _analyse_args_and_options $@ && {
     _verbose
-    _main
+    _verify_static_vars && {
+        _main
+    }
 }
 exit 0
