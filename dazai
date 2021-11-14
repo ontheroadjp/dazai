@@ -75,7 +75,6 @@ function _main() {
             ;;
         'zen' | 'zenkaku')
             ${NO_SYMBOL} && {
-                #seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
                 seed=($(cat ${SEED_DIR}/zenkaku.txt | head -n 10 | fold -w 1))
             } || {
                 seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
@@ -87,8 +86,6 @@ function _main() {
             ;;
     esac
 
-
-    #set -f
     local output=()
     for n in $(seq ${OUT_LINE_NUMBER}); do
         for i in $(seq ${OUT_CHAR_LENGTH}); do
@@ -98,7 +95,6 @@ function _main() {
         output+=(${char_line})
         char_line=""
     done
-    #set +f
 
     [ "${DELIMITER}" = '\n' ] && {
         (IFS=$'\n'; echo "${output[*]}")
@@ -112,11 +108,6 @@ function _main() {
 # -------------------------------------------------------------
 
 ARG_VALUES=()
-SAMPLE_OPTION_A=""
-SAMPLE_OPTION_B=""
-SAMPLE_OPTION_FLAG_N=false
-SAMPLE_OPTION_FLAG_L=false
-SAMPLE_OPTION_FLAG_P=false
 
 function _analyse_args_and_options() {
     while (( $# > 0 ))
@@ -134,33 +125,43 @@ function _analyse_args_and_options() {
                 LOGGING=true
                 shift
                 ;;
-            -l | --length)                  # Must have argument
+
+            # Must have argument
+            -l | --length)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-l option requires a value."
                 fi
                 OUT_CHAR_LENGTH=$2
                 shift 2
                 ;;
-            -n | --number)                  # Must have argument
+
+            # Must have argument
+            -n | --number)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-n option requires a value."
                 fi
                 OUT_LINE_NUMBER=$2
                 shift 2
                 ;;
-            -d | --delimiter)                  # Must have argument
+
+            # Must have argument
+            -d | --delimiter)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-d option requires a value."
                 fi
                 DELIMITER=$2
                 shift 2
                 ;;
-            -- | -) # after this all args include '-xx', will treat arg value
+
+            # after this all args include '-xx', will treat arg value
+            -- | -)
                 shift
                 ARG_VALUES+=( "$@" )
                 break
                 ;;
-            --*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            --*)
                 if [[ "$1" =~ 'no-symbol' ]]; then
                     NO_SYMBOL=true
                 fi
