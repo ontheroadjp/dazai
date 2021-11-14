@@ -9,7 +9,7 @@ SEPARATOR="---------------------------"
 
 function _usage() {
     echo "Usage: ${SCRIPT_NAME} [OPTIONS] [COMMAND]"
-    echo "  This script outputs a random string."
+    echo "  This script will generate a random string."
     echo
     echo "Commands:"
     echo "  han|hankaku                    Output only half-width character string"
@@ -20,7 +20,7 @@ function _usage() {
     echo "  -v, --version                  Show script version."
     echo "  -n, --length val               Length of output chars."
     echo "  -n, --number val               Number of output char lines."
-    echo "  -o, --out val                  Output file path."
+    echo "  -d, --delimiter                Output field delimiter charactor."
     echo "      --no-symbol                No symbol within output."
     echo "      --verbose                  Print various logging information"
     echo
@@ -48,7 +48,7 @@ function _verbose() {
     _log "OUT_CHAR_LENGTH: ${OUT_CHAR_LENGTH}"
     _log "OUT_LINE_NUMBER: ${OUT_LINE_NUMBER}"
     _log "NO_SYMBOL: ${NO_SYMBOL}"
-    _log "OUT_FILE: ${OUT_FILE}"
+    _log "DELIMITER: '${DELIMITER}'"
     _log ${SEPARATOR}
 }
 
@@ -56,7 +56,7 @@ SEED_DIR="${SELF}/seed"
 OUT_CHAR_LENGTH=20
 OUT_LINE_NUMBER=1
 NO_SYMBOL=false
-OUT_FILE=''
+DELIMITER=' '
 
 function _main() {
     local format=${ARG_VALUES[0]}
@@ -69,8 +69,7 @@ function _main() {
                         | fold -w1))
             } || {
                 set -f
-                seed=($(cat ${SEED_DIR}/hankaku.txt \
-                        | fold -w 1))
+                seed=($(cat ${SEED_DIR}/hankaku.txt | fold -w 1))
                 set +f
             }
             ;;
@@ -88,21 +87,24 @@ function _main() {
             ;;
     esac
 
-    set -f
+
+    #set -f
+    local output=()
     for n in $(seq ${OUT_LINE_NUMBER}); do
         for i in $(seq ${OUT_CHAR_LENGTH}); do
-            char_line+=${seed[$((${RANDOM} % ${#seed[*]}))]}
+            char_line+=${seed[$((${RANDOM} % ${#seed[@]}))]}
         done
 
-        [ -z ${OUT_FILE} ] && {
-            echo ${char_line[@]}
-        } || {
-            echo "${char_line[@]}" >> ${OUT_FILE}
-        }
-
+        output+=(${char_line})
         char_line=""
     done
-    set +f
+    #set +f
+
+    [ "${DELIMITER}" = '\n' ] && {
+        (IFS=$'\n'; echo "${output[*]}")
+    } || {
+        (IFS="${DELIMITER}"; echo "${output[*]}")
+    }
 }
 
 # -------------------------------------------------------------
@@ -146,11 +148,11 @@ function _analyse_args_and_options() {
                 OUT_LINE_NUMBER=$2
                 shift 2
                 ;;
-            -o | --out)                  # Must have argument
+            -d | --delimiter)                  # Must have argument
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-                    _err "-o option requires a value."
+                    _err "-d option requires a value."
                 fi
-                OUT_FILE=$2
+                DELIMITER=$2
                 shift 2
                 ;;
             -- | -) # after this all args include '-xx', will treat arg value
@@ -172,13 +174,11 @@ function _analyse_args_and_options() {
     done
 }
 
+function _set_static_vars() {
+    :
+}
+
 function _verify_static_vars() {
-    [ ! -z ${OUT_FILE} ] && [ ! -d $(dirname ${OUT_FILE}) ] && {
-        _err "No such directory. - $(dirname ${OUT_FILE})"
-    }
-    [ ! -z ${OUT_FILE} ] && [ -f ${OUT_FILE} ] && {
-        _err "File already exist. - ${OUT_FILE}"
-    }
    :
 }
 
@@ -187,7 +187,7 @@ function _verify_static_vars() {
 # -------------------------------------------------------------
 _analyse_args_and_options $@ && {
     _verbose
-    _verify_static_vars && {
+    _set_static_vars && _verify_static_vars && {
         _main
     }
 }
