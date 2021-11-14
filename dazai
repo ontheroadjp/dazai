@@ -3,18 +3,24 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-VERSION="0.8.0"
+VERSION="1.1.0"
 LOGGING=false
+SEPARATOR="---------------------------"
 
 function _usage() {
-    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
-    echo "  This script is ~."
+    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [COMMAND]"
+    echo "  This script will generate a random string."
+    echo
+    echo "Commands:"
+    echo "  han|hankaku                    Output only half-width character string"
+    echo "  zen|zenkaku                    Output only double-byte character strings"
     echo
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -n, --length ARG               length of output chars."
-    echo "  -n, --number ARG               number of output char lines."
+    echo "  -n, --length val               Length of output chars."
+    echo "  -n, --number val               Number of output char lines."
+    echo "  -d, --delimiter                Output field delimiter charactor."
     echo "      --no-symbol                No symbol within output."
     echo "      --verbose                  Print various logging information"
     echo
@@ -42,12 +48,15 @@ function _verbose() {
     _log "OUT_CHAR_LENGTH: ${OUT_CHAR_LENGTH}"
     _log "OUT_LINE_NUMBER: ${OUT_LINE_NUMBER}"
     _log "NO_SYMBOL: ${NO_SYMBOL}"
+    _log "DELIMITER: '${DELIMITER}'"
+    _log ${SEPARATOR}
 }
 
 SEED_DIR="${SELF}/seed"
 OUT_CHAR_LENGTH=20
 OUT_LINE_NUMBER=1
 NO_SYMBOL=false
+DELIMITER=' '
 
 function _main() {
     local format=${ARG_VALUES[0]}
@@ -60,34 +69,40 @@ function _main() {
                         | fold -w1))
             } || {
                 set -f
-                seed=($(cat ${SEED_DIR}/hankaku.txt \
-                        | fold -w 1))
+                seed=($(cat ${SEED_DIR}/hankaku.txt | fold -w 1))
                 set +f
             }
             ;;
         'zen' | 'zenkaku')
             ${NO_SYMBOL} && {
-                #seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
                 seed=($(cat ${SEED_DIR}/zenkaku.txt | head -n 10 | fold -w 1))
             } || {
                 seed=($(fold -w 1 '${SEED_DIR}/zenkaku.txt'))
             }
             ;;
         *)
+            set -f
             seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
-                                '${SEED_DIR}/hankaku.txt' ))
+                                ${SEED_DIR}/hankaku.txt ))
+            set +f
             ;;
     esac
 
-    set -f
+    local output=()
     for n in $(seq ${OUT_LINE_NUMBER}); do
         for i in $(seq ${OUT_CHAR_LENGTH}); do
-            char_line+=${seed[$((${RANDOM} % ${#seed[*]}))]}
+            char_line+=${seed[$((${RANDOM} % ${#seed[@]}))]}
         done
-        echo ${char_line[@]}
+
+        output+=(${char_line})
         char_line=""
     done
-    set +f
+
+    [ "${DELIMITER}" = '\n' ] && {
+        (IFS=$'\n'; echo "${output[*]}")
+    } || {
+        (IFS="${DELIMITER}"; echo "${output[*]}")
+    }
 }
 
 # -------------------------------------------------------------
@@ -95,11 +110,6 @@ function _main() {
 # -------------------------------------------------------------
 
 ARG_VALUES=()
-SAMPLE_OPTION_A=""
-SAMPLE_OPTION_B=""
-SAMPLE_OPTION_FLAG_N=false
-SAMPLE_OPTION_FLAG_L=false
-SAMPLE_OPTION_FLAG_P=false
 
 function _analyse_args_and_options() {
     while (( $# > 0 ))
@@ -117,26 +127,43 @@ function _analyse_args_and_options() {
                 LOGGING=true
                 shift
                 ;;
-            -l | --length)                  # Must have argument
+
+            # Must have argument
+            -l | --length)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-l option requires a value."
                 fi
                 OUT_CHAR_LENGTH=$2
                 shift 2
                 ;;
-            -n | --number)                  # Must have argument
+
+            # Must have argument
+            -n | --number)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-n option requires a value."
                 fi
                 OUT_LINE_NUMBER=$2
                 shift 2
                 ;;
-            -- | -) # after this all args include '-xx', will treat arg value
+
+            # Must have argument
+            -d | --delimiter)
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-d option requires a value."
+                fi
+                DELIMITER=$2
+                shift 2
+                ;;
+
+            # after this all args include '-xx', will treat arg value
+            -- | -)
                 shift
                 ARG_VALUES+=( "$@" )
                 break
                 ;;
-            --*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            --*)
                 if [[ "$1" =~ 'no-symbol' ]]; then
                     NO_SYMBOL=true
                 fi
@@ -150,11 +177,21 @@ function _analyse_args_and_options() {
     done
 }
 
+function _set_static_vars() {
+    :
+}
+
+function _verify_static_vars() {
+   :
+}
+
 # -------------------------------------------------------------
 # Main Routine
 # -------------------------------------------------------------
 _analyse_args_and_options $@ && {
     _verbose
-    _main
+    _set_static_vars && _verify_static_vars && {
+        _main
+    }
 }
 exit 0
