@@ -78,12 +78,12 @@ function _main() {
                 #seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
                 seed=($(cat ${SEED_DIR}/zenkaku.txt | head -n 10 | fold -w 1))
             } || {
-                seed=($(fold -w 1 '${SEED_DIR}/zenkaku.txt'))
+                seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt))
             }
             ;;
         *)
             seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
-                                '${SEED_DIR}/hankaku.txt' ))
+                                ${SEED_DIR}/hankaku.txt ))
             ;;
     esac
 
