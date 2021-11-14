@@ -8,15 +8,19 @@ LOGGING=false
 SEPARATOR="---------------------------"
 
 function _usage() {
-    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
-    echo "  This script is ~."
+    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [COMMAND]"
+    echo "  This script outputs a random string."
+    echo
+    echo "Commands:"
+    echo "  han|hankaku                    Output only half-width character string"
+    echo "  zen|zenkaku                    Output only double-byte character strings"
     echo
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -n, --length ARG               Length of output chars."
-    echo "  -n, --number ARG               Number of output char lines."
-    echo "  -0, --out ARG                  Output file path."
+    echo "  -n, --length val               Length of output chars."
+    echo "  -n, --number val               Number of output char lines."
+    echo "  -o, --out val                  Output file path."
     echo "      --no-symbol                No symbol within output."
     echo "      --verbose                  Print various logging information"
     echo
