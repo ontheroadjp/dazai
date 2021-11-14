@@ -81,8 +81,10 @@ function _main() {
             }
             ;;
         *)
+            set -f
             seed=($(fold -w 1 ${SEED_DIR}/zenkaku.txt \
                                 ${SEED_DIR}/hankaku.txt ))
+            set +f
             ;;
     esac
 
